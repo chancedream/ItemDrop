@@ -1,0 +1,4 @@
+
+public enum Quality {
+    UNIQUE, SET, RARE, MAGICAL, SUPERIOR, NORMAL, LOW_QUALITY;
+}

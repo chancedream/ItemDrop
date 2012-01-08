@@ -9,12 +9,32 @@ public class TCChooser {
     
     public static void main(String[] args) throws Exception {
         TCChooser tcChooser = new TCChooser();
-        List<Item> list = tcChooser.drop("baalcrab", Difficulty.HELL, 4, 590, true);
+//        int sum = 0;
+//        Item griffon = tcChooser.data.getUniqueItemMap().get("ci3").get(0);
+//        ItemBase zod = tcChooser.data.getCodeItemBaseMap().get("r28");
+//        Item hotspur = tcChooser.data.getUniqueItemMap().get("stu").get(0);
+//        for (int i = 0; i < 100; i++) {
+//        int count = 0;
+//        boolean stop = false;
+//        while (!stop) {
+//            List<Item> list = tcChooser.drop("duriel", Difficulty.NIGHTMARE, 1, 240, true);
+//            for (Item item : list) {
+//                if (item.getName() == hotspur.getName())
+//                    stop = true;
+//                count++;
+//            }
+//        }
+//        System.out.println(count);
+//        sum += count;
+//        }
+//        System.out.println("ave = " + sum/100);
         
+        List<Item> list = tcChooser.drop("baalcrab", Difficulty.HELL, 8, 550, true);
         System.out.println(list.size());
         for (int i = 0; i < list.size(); i++) {
             System.out.println(list.get(i));
         }
+        
     }
     
     public TCChooser() {
@@ -42,7 +62,8 @@ public class TCChooser {
             mlvl = monster.getLevelH();
             break;
         }
-        List<Item> result = drop(data.getTcMap().get(tcName), noDropFix, mf, mlvl);
+        TC tc = data.getTcMap().get(tcName);
+        List<Item> result = drop(tcLevelUp(tc, mlvl), noDropFix, mf, mlvl);
         if (result.size() > 6) {
             result = result.subList(0, 6);
         }
@@ -105,6 +126,9 @@ public class TCChooser {
             return subTCDrop(tc, noDropFix, mf, mlvl, monsterTC);
         }
         else {
+            if (tcName.matches("\"gld\\,mul=\\d+\"")) {
+                tcName = "gld";
+            }
             List<EquipBase> equipBaseList = data.getTcEquipBaseMap().get(tcName);
             ItemBase itemBase = null;
             if (equipBaseList != null) {
@@ -134,9 +158,9 @@ public class TCChooser {
             }
             if (uniqueItemList.size() > 1) {
                 int lastIndex = data.getUniqueQlvlIndexMap().get(itemBase.getCode())[mlvl];
-                return uniqueItemList.get(rand.nextInt(lastIndex+1));
+                return uniqueItemList.get(rand.nextInt(lastIndex+1)).generateItem();
             }
-            return uniqueItemList.get(0);
+            return uniqueItemList.get(0).generateItem();
         case SET:
             List<Item> setItemList = data.getSetItemMap().get(itemBase.getCode());
             if (setItemList == null || setItemList.get(0).getQlvl() > mlvl) {
@@ -145,9 +169,9 @@ public class TCChooser {
             }
             if (setItemList.size() > 1) {
                 int lastIndex = data.getSetQlvlIndexMap().get(itemBase.getCode())[mlvl];
-                return setItemList.get(rand.nextInt(lastIndex+1));
+                return setItemList.get(rand.nextInt(lastIndex+1)).generateItem();
             }
-            return setItemList.get(0);
+            return setItemList.get(0).generateItem();
         case RARE:
         case MAGICAL:
         case SUPERIOR:
@@ -163,21 +187,45 @@ public class TCChooser {
         switch(targetQuality) {
         case RARE:
             if (itemType.canRare()) {
-                return new Item(itemBase, Quality.RARE, itemBase.getQlvl(), itemBase.getName());
+                return new Item(itemBase, Quality.RARE, itemBase.getQlvl(), itemBase.getName(), null);
             }
         case MAGICAL:
             if (itemType.canMagic()) {
-                return new Item(itemBase, Quality.MAGICAL, itemBase.getQlvl(), itemBase.getName());
+                return new Item(itemBase, Quality.MAGICAL, itemBase.getQlvl(), itemBase.getName(), null);
             }
         case NORMAL:
             targetQuality = Quality.NORMAL;
         case SUPERIOR:
         case LOW_QUALITY:
             if (!itemType.canNormal()) {
-                return new Item(itemBase, Quality.MAGICAL, itemBase.getQlvl(), itemBase.getName());
+                return new Item(itemBase, Quality.MAGICAL, itemBase.getQlvl(), itemBase.getName(), null);
             }
         default:
-            return new Item(itemBase, targetQuality, itemBase.getQlvl(), itemBase.getName());
+            return new Item(itemBase, targetQuality, itemBase.getQlvl(), itemBase.getName(), null);
         }
+    }
+    
+    private TC tcLevelUp(TC tc, int mlvl) {
+        if (tc.getGroup() <= 0) {
+            return tc;
+        }
+        List<TC> tcList = data.getTcGroupMap().get(tc.getGroup());
+        boolean tcFound = false;
+        TC result = tc;
+        for (TC temp : tcList) {
+            if (!tcFound) {
+                if (tc == temp)
+                    tcFound = true;
+            }
+            else {
+                if (temp.getLevel() > tc.getLevel() && temp.getLevel() < mlvl) {
+                    result = temp;
+                }
+                else {
+                    return result;
+                }
+            }
+        }
+        return result;
     }
 }

@@ -6,13 +6,13 @@ public class QualityChooser {
     private Random rand = new Random();
       
     public static void main(String[] args) {
-        int qlvl = 84;
-        int mlvl = 99;
+        int qlvl = 7;
+        int mlvl = 12;
         boolean classic = false;
         int cu, cs, cr;
-        cu = cs = cr = 983;
+        cu = cs = cr = 995;
         int cm = 1024;
-        int mf = 500;
+        int mf = 900;
         int total = 100000;
         QualityChooser chooser = new QualityChooser();
         for (int j = 0; j <=1000; j+=50) {

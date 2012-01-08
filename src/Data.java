@@ -9,8 +9,13 @@ import java.util.List;
 import java.util.Map;
 
 
+/**
+ * @author chance
+ *
+ */
 public class Data {
     private Map<String, TC> tcMap;
+    private Map<Integer, List<TC>> tcGroupMap;
     private Map<String, List<EquipBase>> tcEquipBaseMap;
     private Map<String, ItemBase> codeItemBaseMap;
     private Map<String, List<Item>> uniqueItemMap;
@@ -20,11 +25,15 @@ public class Data {
     private Map<String, Integer[]> uniqueQlvlIndexMap;
     private Map<String, Integer[]> setQlvlIndexMap;
     private Map<String, ItemType> itemTypeMap;
+    private Map<String, Stat> statMap;
+    private Map<String, Property> propertyMap;
+    private Map<String, Skill> skillMap;
     
     private static Data instance;
     
     public static void main(String[] args) {
         System.out.println(Data.getInstance().codeItemBaseMap.size());
+        System.out.println(Data.getInstance().setItemMap.get("ucl").get(0).generateItem());
     }
     
     public static Data getInstance() {
@@ -36,11 +45,21 @@ public class Data {
     
     private Data() {
         tcMap = new HashMap<String, TC>();
+        tcGroupMap = new HashMap<Integer, List<TC>>();
         DataReader reader = new DataReader("data/TreasureClassEx.txt");
         String[] tokens;
         while((tokens = reader.readLine()) != null) {
             TC tc = TCParser.parse(tokens);
             tcMap.put(tc.getName(), tc);
+            int group = tc.getGroup();
+            if (group > 0) {
+                List<TC> tcList = tcGroupMap.get(group);
+                if (tcList == null) {
+                    tcList = new ArrayList<TC>();
+                    tcGroupMap.put(group, tcList);
+                }
+                tcList.add(tc);
+            }
             //System.out.println(tc);
         }
         tcEquipBaseMap = new HashMap<String, List<EquipBase>>();
@@ -61,8 +80,10 @@ public class Data {
             EquipBase base = weaponParser.parse(tokens);
             if (base != null) {
                 codeItemBaseMap.put(base.getCode(), base);
-                putEquipBase(tcEquipBaseMap, base, base.getType().contains("bow") ? TC.BOW : TC.MELEE);
-                putEquipBase(tcEquipBaseMap, base, TC.WEAPON);
+                if (!base.getType().equals("tpot")) {
+                    putEquipBase(tcEquipBaseMap, base, base.getType().contains("bow") ? TC.BOW : TC.MELEE);
+                    putEquipBase(tcEquipBaseMap, base, TC.WEAPON);
+                }
                 //System.out.println(base);
             }
         }
@@ -73,11 +94,34 @@ public class Data {
             codeItemBaseMap.put(misc.getCode(), misc);
             //System.out.println(misc);
         }
+        skillMap = new HashMap<String, Skill>();
+        reader = new DataReader("data/skills.txt");
+        SkillParser skillParser = new SkillParser(reader.readLine());
+        while((tokens = reader.readLine()) != null) {
+            Skill skill = skillParser.parse(tokens);
+            skillMap.put(skill.getName(), skill);
+        }
+        statMap = new HashMap<String, Stat>();
+        reader = new DataReader("data/ItemStatCost.txt");
+        StatParser statParser = new StatParser(reader.readLine());
+        while((tokens = reader.readLine()) != null) {
+            Stat stat = statParser.parse(tokens);
+            statMap.put(stat.getName(), stat);
+        }
+        propertyMap = new HashMap<String, Property>();
+        reader = new DataReader("data/Properties.txt");
+        PropertyParser propertyParser = new PropertyParser(reader.readLine());
+        while((tokens = reader.readLine()) != null) {
+            Property property = propertyParser.parse(tokens, statMap);
+            if (property != null) {
+                propertyMap.put(property.getCode(), property);
+            }
+        }
         uniqueItemMap = new HashMap<String, List<Item>>();
         reader = new DataReader("data/UniqueItems.txt");
         UniqueItemParser uniqueItemParser = new UniqueItemParser(reader.readLine());
         while((tokens = reader.readLine()) != null) {
-            Item item = uniqueItemParser.parse(tokens, codeItemBaseMap);
+            Item item = uniqueItemParser.parse(tokens, codeItemBaseMap, propertyMap);
             if (item != null) {
                 putUniqueSetItem(uniqueItemMap, item);
             }
@@ -88,7 +132,7 @@ public class Data {
         reader = new DataReader("data/SetItems.txt");
         SetItemParser setItemParser = new SetItemParser(reader.readLine());
         while((tokens = reader.readLine()) != null) {
-            Item item = setItemParser.parse(tokens, codeItemBaseMap);
+            Item item = setItemParser.parse(tokens, codeItemBaseMap, propertyMap);
             if (item != null) {
                 putUniqueSetItem(setItemMap, item);
             }
@@ -101,7 +145,7 @@ public class Data {
         MonsterParser monsterParser = new MonsterParser(reader.readLine());
         while((tokens = reader.readLine()) != null) {
             Monster monster = monsterParser.parse(tokens);
-            if (monster != null && monster.isBoss()) {
+            if (monster != null) {
                 monsterIdMap.put(monster.getId(), monster);
                 monsterNameMap.put(monster.getName(), monster);
                 //System.out.println(monster);
@@ -241,6 +285,22 @@ public class Data {
 
     public Map<String, ItemType> getItemTypeMap() {
         return itemTypeMap;
+    }
+
+    public Map<Integer, List<TC>> getTcGroupMap() {
+        return tcGroupMap;
+    }
+
+    public Map<String, Stat> getStatMap() {
+        return statMap;
+    }
+
+    public Map<String, Property> getPropertyMap() {
+        return propertyMap;
+    }
+
+    public Map<String, Skill> getSkillMap() {
+        return skillMap;
     }
     
     

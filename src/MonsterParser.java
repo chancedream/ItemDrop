@@ -15,11 +15,11 @@ public class MonsterParser extends Parser {
         iLevel = index("Level");
         iLevelN = index("Level(N)");
         iLevelH = index("Level(H)");
-        iTC = index("TreasureClass3");
+        iTC = index("TreasureClass1");
         iTCQ = index("TreasureClass4");
-        iTCN = index("TreasureClass3(N)");
+        iTCN = index("TreasureClass1(N)");
         iTCQN = index("TreasureClass4(N)");
-        iTCH = index("TreasureClass3(H)");
+        iTCH = index("TreasureClass1(H)");
         iTCQH = index("TreasureClass4(H)");
         iBoss = index("boss");
     }
